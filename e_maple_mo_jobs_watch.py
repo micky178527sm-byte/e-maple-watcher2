@@ -14,36 +14,22 @@ TOKEN_FILE = Path.home() / ".emaple_line_token"
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; e-maple-watcher/1.0; +local-script)"}
 
+from typing import Optional
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo("America/Toronto")
 DT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}\b")  # 分まで
 
-def parse_updated_dt(text: str) -> datetime | None:
-    m = DT_RE.search(text)
-    if not m:
-        return None
-    dt = datetime.fromisoformat(m.group(0))  # "YYYY-MM-DD HH:MM"
-    return dt.replace(tzinfo=TZ)
-
-from datetime import datetime
 from typing import Optional
 
 DT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}\b")  # 分まで
 
 def parse_updated_dt(text: str) -> Optional[str]:
-    # 一覧のテキストから "YYYY-MM-DD HH:MM" を抜き出す（見つからなければNone）
     m = DT_RE.search(text)
     return m.group(0) if m else None
 
-def load_state() -> dict:
-    if STATE_FILE.exists():
-        try:
-            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            return {}
-    return {}
+from datetime import datetime
 
 def save_state(st: dict) -> None:
     STATE_FILE.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
