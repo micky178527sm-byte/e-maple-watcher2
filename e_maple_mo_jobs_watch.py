@@ -14,29 +14,74 @@ TOKEN_FILE = Path.home() / ".emaple_line_token"
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; e-maple-watcher/1.0; +local-script)"}
 
-def load_last_no() -> int:
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+TZ = ZoneInfo("America/Toronto")
+DT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}\b")  # 分まで
+
+def parse_updated_dt(text: str) -> datetime | None:
+    m = DT_RE.search(text)
+    if not m:
+        return None
+    dt = datetime.fromisoformat(m.group(0))  # "YYYY-MM-DD HH:MM"
+    return dt.replace(tzinfo=TZ)
+
+from datetime import datetime
+from typing import Optional
+
+DT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}\b")  # 分まで
+
+def parse_updated_dt(text: str) -> Optional[str]:
+    # 一覧のテキストから "YYYY-MM-DD HH:MM" を抜き出す（見つからなければNone）
+    m = DT_RE.search(text)
+    return m.group(0) if m else None
+
+def load_state() -> dict:
     if STATE_FILE.exists():
         try:
-            return int(json.loads(STATE_FILE.read_text(encoding="utf-8")).get("last_no", 0))
+            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
         except Exception:
-            return 0
-    return 0
+            return {}
+    return {}
 
-def save_last_no(n: int) -> None:
-    STATE_FILE.write_text(json.dumps({"last_no": n}, ensure_ascii=False), encoding="utf-8")
+def save_state(st: dict) -> None:
+    STATE_FILE.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
 
-def fetch_item_nos():
+def get_last_dt_and_seen():
+    st = load_state()
+    last_dt = st.get("last_dt")  # "YYYY-MM-DD HH:MM"
+    seen = set(st.get("seen_nos", []))
+    return last_dt, seen
+
+def set_last_dt_and_seen(last_dt: str, seen_nos: list) -> None:
+    save_state({"last_dt": last_dt, "seen_nos": seen_nos})
+
+def fetch_items():
     r = requests.get(WATCH_URL, headers=HEADERS, timeout=20)
     r.raise_for_status()
     soup = BeautifulSoup(r.text, "html.parser")
 
-    nos = []
+    items = []
     for a in soup.select("a[href*='classified/item.html?no=']"):
         href = a.get("href", "")
         m = re.search(r"no=(\d+)", href)
-        if m:
-            nos.append(int(m.group(1)))
-    return sorted(set(nos), reverse=True)
+        if not m:
+            continue
+        no = int(m.group(1))
+
+        container = a.find_parent(["tr", "li", "div", "p"]) or a.parent
+        text = container.get_text(" ", strip=True) if container else a.get_text(" ", strip=True)
+
+        dt = parse_updated_dt(text)  # "YYYY-MM-DD HH:MM"
+        if not dt:
+            continue
+
+        items.append({"no": no, "dt": dt, "text": text})
+
+    # dt降順（文字列のままでも "YYYY-MM-DD HH:MM" なので並び順が合う）
+    items.sort(key=lambda x: (x["dt"], x["no"]), reverse=True)
+    return items
 
 def read_token() -> str:
     t = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
@@ -60,23 +105,35 @@ def send_line_message(text: str) -> None:
 
 def main():
     args = set(sys.argv[1:])
-    items = fetch_item_nos()
+    items = fetch_items()
     if not items:
         return
 
-    newest_no = items[0]
+    newest_dt = items[0]["dt"]             # "YYYY-MM-DD HH:MM"
+    same_dt_nos = [x["no"] for x in items if x["dt"] == newest_dt]
 
+    # 初回は通知なしで基準だけ作る（大量通知防止）
     if "--init" in args:
-        save_last_no(newest_no)
+        set_last_dt_and_seen(newest_dt, same_dt_nos)
         return
 
-    last_no = load_last_no()
-    new_count = sum(1 for no in items if no > last_no)
+    last_dt, seen = get_last_dt_and_seen()
+    if not last_dt:
+        # stateが無い/旧形式なら通知せず基準作成
+        set_last_dt_and_seen(newest_dt, same_dt_nos)
+        return
 
-    if new_count > 0:
-        msg = f"e-Maple（モントリオール求人）に新着 {new_count} 件：{OPEN_URL}"
+    new_or_updated = []
+    for x in items:
+        if x["dt"] > last_dt:
+            new_or_updated.append(x)
+        elif x["dt"] == last_dt and x["no"] not in seen:
+            new_or_updated.append(x)
+
+    if new_or_updated:
+        msg = f"e-Maple（MO求人）新規/更新 {len(new_or_updated)} 件：{OPEN_URL}"
         send_line_message(msg)
-        save_last_no(newest_no)
+        set_last_dt_and_seen(newest_dt, same_dt_nos)
 
 if __name__ == "__main__":
     main()
