@@ -1,4 +1,4 @@
-import json, re, sys, subprocess, warnings
+import os, json, re, sys, subprocess, warnings
 from pathlib import Path
 
 warnings.filterwarnings("ignore", message=r"urllib3 v2 only supports OpenSSL.*")
@@ -6,8 +6,8 @@ warnings.filterwarnings("ignore", message=r"urllib3 v2 only supports OpenSSL.*")
 import requests
 from bs4 import BeautifulSoup
 
-WATCH_URL = "http://www.e-maple.net/classified.html?area=MO&cat=WO"
-OPEN_URL  = "http://www.e-maple.net/classified.html?area=MO&cat=WO"
+WATCH_URL = "http://www.e-maple.net/classified.html?cat=WO&area=MO"
+OPEN_URL  = "http://www.e-maple.net/classified.html?cat=WO&area=MO"
 
 STATE_FILE = Path(__file__).with_name("e_maple_state.json")
 TOKEN_FILE = Path.home() / ".emaple_line_token"
@@ -39,10 +39,12 @@ def fetch_item_nos():
     return sorted(set(nos), reverse=True)
 
 def read_token() -> str:
-    t = TOKEN_FILE.read_text(encoding="utf-8").strip()
-    if not t:
-        raise RuntimeError("LINE token file is empty")
-    return t
+    t = os.environ.get("CHANNEL_ACCESS_TOKEN", "")
+    if t:
+        return t
+    # ↓ここから下は、今までの「ファイルから読む処理」があれば残す（なければ消してOK）
+    with open("token.txt", "r", encoding="utf-8") as f:
+        return f.read().strip()
 
 def send_line_message(text: str) -> None:
     token = read_token()
