@@ -31,6 +31,14 @@ def parse_updated_dt(text: str) -> Optional[str]:
 
 from datetime import datetime
 
+def load_state() -> dict:
+    if STATE_FILE.exists():
+        try:
+            return json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+    return {}
+
 def save_state(st: dict) -> None:
     STATE_FILE.write_text(json.dumps(st, ensure_ascii=False), encoding="utf-8")
 
