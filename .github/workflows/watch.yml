@@ -30,6 +30,9 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run watcher
+        env:
+          CHANNEL_ACCESS_TOKEN: ${{ secrets.CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
         run: python e_maple_mo_jobs_watch.py
 
       - name: Commit updated state (if changed)
