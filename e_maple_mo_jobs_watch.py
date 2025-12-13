@@ -27,12 +27,7 @@ DT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}\b")  # 分まで
 
 def parse_updated_dt(text: str) -> Optional[str]:
     m = DT_RE.search(text)
-    if not m:
-        return None
-    raw = m.group(0)  # "YYYY-MM-DD HH:MM"
-    dt_jst = datetime.fromisoformat(raw).replace(tzinfo=JST)
-    dt_et = dt_jst.astimezone(ET)
-    return dt_et.strftime("%Y-%m-%d %H:%M")
+    return m.group(0) if m else None
 
 def load_state() -> dict:
     if STATE_FILE.exists():
