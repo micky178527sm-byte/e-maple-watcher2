@@ -3,7 +3,7 @@ name: e-maple-watch
 on:
   workflow_dispatch:
   schedule:
-    - cron: '5/10 * * * *'
+  - cron: '5,15,25,35,45,55 * * * *'
 
 concurrency:
   group: e-maple-watch
