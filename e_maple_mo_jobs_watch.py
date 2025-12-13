@@ -1,5 +1,8 @@
 import os, json, re, sys, subprocess, warnings
 from pathlib import Path
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from typing import Optional
 
 warnings.filterwarnings("ignore", message=r"urllib3 v2 only supports OpenSSL.*")
 
@@ -15,21 +18,21 @@ TOKEN_FILE = Path.home() / ".emaple_line_token"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; e-maple-watcher/1.0; +local-script)"}
 
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-TZ = ZoneInfo("America/Toronto")
-DT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}\b")  # 分まで
-
-from typing import Optional
-
+JST = ZoneInfo("Asia/Tokyo")
+ET  = ZoneInfo("America/Toronto")
 DT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}\b")  # 分まで
 
 def parse_updated_dt(text: str) -> Optional[str]:
     m = DT_RE.search(text)
-    return m.group(0) if m else None
-
-from datetime import datetime
+    if not m:
+        return None
+    raw = m.group(0)  # "YYYY-MM-DD HH:MM"
+    dt_jst = datetime.fromisoformat(raw).replace(tzinfo=JST)
+    dt_et = dt_jst.astimezone(ET)
+    return dt_et.strftime("%Y-%m-%d %H:%M")
 
 def load_state() -> dict:
     if STATE_FILE.exists():
