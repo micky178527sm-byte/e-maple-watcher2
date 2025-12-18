@@ -18,10 +18,6 @@ TOKEN_FILE = Path.home() / ".emaple_line_token"
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; e-maple-watcher/1.0; +local-script)"}
 
-from typing import Optional
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
-
 JST = ZoneInfo("Asia/Tokyo")
 ET  = ZoneInfo("America/Toronto")
 DT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2} \d{2}:\d{2}\b")  # 分まで
