@@ -9,17 +9,14 @@ warnings.filterwarnings("ignore", message=r"urllib3 v2 only supports OpenSSL.*")
 import requests
 from bs4 import BeautifulSoup
 
-WATCH_URL = "http://www.e-maple.net/classified.html?cat=WO&area=MO"
-OPEN_URL  = "http://www.e-maple.net/classified.html?cat=WO&area=MO"
+# 通知は末尾が "WO" のURLだけを使う（area -> cat の順）
+WATCH_URL = "http://www.e-maple.net/classified.html?area=MO&cat=WO"
+OPEN_URL  = "http://www.e-maple.net/classified.html?area=MO&cat=WO"
 
 STATE_FILE = Path(__file__).with_name("e_maple_state.json")
 TOKEN_FILE = Path.home() / ".emaple_line_token"
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; e-maple-watcher/1.0; +local-script)"}
-
-from typing import Optional
-from datetime import datetime, timedelta
-from zoneinfo import ZoneInfo
 
 JST = ZoneInfo("Asia/Tokyo")
 ET  = ZoneInfo("America/Toronto")
