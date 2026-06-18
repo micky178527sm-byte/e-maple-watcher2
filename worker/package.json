@@ -1,0 +1,14 @@
+{
+  "name": "e-maple-watcher-worker",
+  "version": "2.0.0",
+  "private": true,
+  "description": "e-Maple モントリオール求人ウォッチャー（Cloudflare Worker + Telegram 通知）",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  }
+}

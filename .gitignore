@@ -1,0 +1,21 @@
+# 認証情報（絶対にコミットしない）
+.telegram_bot_token
+.telegram_chat_id
+.emaple_line_token
+token.txt
+.dev.vars
+
+# ログ
+*.log
+
+# Node / Wrangler
+worker/node_modules/
+worker/.wrangler/
+node_modules/
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+.DS_Store

@@ -1,0 +1,16 @@
+name = "e-maple-watcher"
+main = "src/index.js"
+compatibility_date = "2026-06-01"
+
+# 定期実行（UTC）。10分ごとに巡回。
+[triggers]
+crons = ["*/10 * * * *"]
+
+# 状態保存用 KV。下記 id は `wrangler kv namespace create STATE` で作成して差し替える。
+[[kv_namespaces]]
+binding = "STATE"
+id = "65b479988e5b454bbfaf8ce2055bbdca"
+
+# TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID は secret で投入する（平文で書かない）:
+#   wrangler secret put TELEGRAM_BOT_TOKEN
+#   wrangler secret put TELEGRAM_CHAT_ID
